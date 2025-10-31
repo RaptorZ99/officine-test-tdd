@@ -269,7 +269,7 @@ describe('Officine', () => {
       expect(aliasMap.get('herbe alternative')).toBe('herbe unique');
     });
 
-    test('preparer rejette une potion connue sans recette enregistrée', () => {
+    test('preparer rejette une potion connue sans recette enregistrée (après suppression)', () => {
       const canonicalPotion = internals.aliasMap.get('fiole de glaires purulentes');
       const savedRecipe = internals.recipes.get(canonicalPotion);
       internals.recipes.delete(canonicalPotion);
