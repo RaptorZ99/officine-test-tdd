@@ -243,4 +243,52 @@ describe('Officine', () => {
       expect(aliasExiste).toBe(false);
     });
   });
+
+  describe('securite de configuration', () => {
+    const internals = Officine.__internals;
+
+    test('buildRecipeBook rejette une potion inconnue', () => {
+      expect(() => internals.buildRecipeBook({ 'potion inconnue': ['1 oeil de grenouille'] })).toThrow(
+        'Potion inconnue dans les recettes: potion inconnue'
+      );
+    });
+
+    test('buildRecipeBook rejette une recette pour un element non potion', () => {
+      expect(() => internals.buildRecipeBook({ 'oeil de grenouille': ['1 larme de brume funèbre'] })).toThrow(
+        'Recette définie pour un élément non potion: oeil de grenouille'
+      );
+    });
+
+    test('buildItemIndexes ignore les doublons de définitions', () => {
+      const definitions = [
+        { type: 'ingredient', canonical: 'Herbe Unique', aliases: ['Herbe Unique'] },
+        { type: 'ingredient', canonical: 'herbe unique', aliases: ['Herbe alternative'] }
+      ];
+      const { itemMap, aliasMap } = internals.buildItemIndexes(definitions);
+      expect(itemMap.size).toBe(1);
+      expect(aliasMap.get('herbe alternative')).toBe('herbe unique');
+    });
+
+    test('preparer rejette une potion connue sans recette enregistrée', () => {
+      const canonicalPotion = internals.aliasMap.get('fiole de glaires purulentes');
+      const savedRecipe = internals.recipes.get(canonicalPotion);
+      internals.recipes.delete(canonicalPotion);
+      try {
+        const atelier = new Officine();
+        expect(() => atelier.preparer('1 fiole de glaires purulentes')).toThrow('Recette inconnue');
+      } finally {
+        internals.recipes.set(canonicalPotion, savedRecipe);
+      }
+    });
+
+    test("n'expose pas les internals hors environnement de test", () => {
+      const originalEnv = process.env.NODE_ENV;
+      process.env.NODE_ENV = 'production';
+      jest.isolateModules(() => {
+        const OfficineProd = require('../src/Officine');
+        expect(OfficineProd.__internals).toBeUndefined();
+      });
+      process.env.NODE_ENV = originalEnv;
+    });
+  });
 });
