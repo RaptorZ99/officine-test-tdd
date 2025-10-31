@@ -23,7 +23,7 @@ Cette commande exécute uniquement `__tests__/Officine.test.js` qui couvre :
 ## Consulter la couverture
 
 ```bash
-npm test:coverage
+npm run test:coverage
 ```
 
 Le taux de coverage sera visible dans les logs, et rapport HTML détaillé sera disponible ensuite dans `coverage/lcov-report/index.html`.
