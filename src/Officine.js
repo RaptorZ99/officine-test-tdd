@@ -77,12 +77,14 @@ function normalize(text) {
   return text
     .trim()
     .toLocaleLowerCase('fr-FR')
+    .replace(/\u0153/g, 'oe')
     .replace(/\s+/g, ' ');
 }
 
 function buildItemIndexes(definitions) {
   const aliasMap = new Map();
   const itemMap = new Map();
+  const catalogue = [];
 
   for (const def of definitions) {
     const canonical = normalize(def.canonical);
@@ -90,16 +92,31 @@ function buildItemIndexes(definitions) {
       itemMap.set(canonical, { type: def.type, canonical });
     }
 
-    const aliases = new Set(def.aliases.concat(def.canonical));
+    const rawAliases = new Set(def.aliases.concat(def.canonical));
+    const aliases = Array.from(rawAliases).sort((a, b) => a.localeCompare(b, 'fr-FR'));
     for (const alias of aliases) {
       aliasMap.set(normalize(alias), canonical);
     }
+
+    catalogue.push({
+      type: def.type,
+      canonical,
+      label: def.canonical,
+      aliases
+    });
   }
 
-  return { aliasMap, itemMap };
+  catalogue.sort((a, b) => {
+    if (a.type === b.type) {
+      return a.label.localeCompare(b.label, 'fr-FR');
+    }
+    return a.type.localeCompare(b.type);
+  });
+
+  return { aliasMap, itemMap, catalogue };
 }
 
-const { aliasMap: ALIASES, itemMap: ITEMS } = buildItemIndexes(ITEM_DEFINITIONS);
+const { aliasMap: ALIASES, itemMap: ITEMS, catalogue: CATALOGUE } = buildItemIndexes(ITEM_DEFINITIONS);
 
 function parseQuantityAndItem(input) {
   if (typeof input !== 'string') {
@@ -203,6 +220,38 @@ class Officine {
 
     this._addToStock(canonical, producible);
     return producible;
+  }
+
+  inventaire() {
+    const items = [];
+    for (const [canonical, quantity] of this._stock.entries()) {
+      if (quantity > 0) {
+        items.push({ nom: canonical, quantite: quantity });
+      }
+    }
+    items.sort((a, b) => a.nom.localeCompare(b.nom, 'fr-FR'));
+    return items;
+  }
+
+  static recettes() {
+    const list = [];
+    for (const [potion, components] of RECIPES.entries()) {
+      list.push({
+        potion,
+        composants: components.map(component => `${component.quantity} ${component.canonical}`)
+      });
+    }
+    list.sort((a, b) => a.potion.localeCompare(b.potion, 'fr-FR'));
+    return list;
+  }
+
+  static catalogue() {
+    return CATALOGUE.map(entry => ({
+      type: entry.type,
+      canonical: entry.canonical,
+      label: entry.label,
+      aliases: [...entry.aliases]
+    }));
   }
 
   _addToStock(canonical, quantity) {
