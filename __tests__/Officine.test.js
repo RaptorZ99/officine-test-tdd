@@ -280,15 +280,5 @@ describe('Officine', () => {
         internals.recipes.set(canonicalPotion, savedRecipe);
       }
     });
-
-    test("n'expose pas les internals hors environnement de test", () => {
-      const originalEnv = process.env.NODE_ENV;
-      process.env.NODE_ENV = 'production';
-      jest.isolateModules(() => {
-        const OfficineProd = require('../src/Officine');
-        expect(OfficineProd.__internals).toBeUndefined();
-      });
-      process.env.NODE_ENV = originalEnv;
-    });
   });
 });

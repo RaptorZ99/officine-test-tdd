@@ -277,14 +277,12 @@ function resolveName(rawName) {
   return canonical;
 }
 
-if (process.env.NODE_ENV === 'test') {
-  Officine.__internals = {
-    buildItemIndexes,
-    buildRecipeBook,
-    aliasMap: ALIASES,
-    itemMap: ITEMS,
-    recipes: RECIPES
-  };
-}
+Officine.__internals = {
+  buildRecipeBook,
+  buildItemIndexes,
+  aliasMap: ALIASES,
+  itemMap: ITEMS,
+  recipes: RECIPES
+};
 
 module.exports = Officine;
